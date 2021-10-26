@@ -9,31 +9,9 @@ get '/' do
   erb(:index)
 end
   
-get '/signup' do
-
-  # grab user input values from params
-  email      = params[:email]
-  avatar_url = params[:avatar_url]
-  username   = params[:username]
-  password   = params[:password]
-
-  # if all user params are present
-  if email.present? && avatar_url.present? && username.present? && password.present?
-
-    # instantiate and save a User
-    user = User.new({ email: email, avatar_url: avatar_url, username: username, password: password })
-    user.save
-
-    # return readable representation of User object
-    escape_html user.inspect
-
-  else
-
-    # display simple error message
-    "Validation failed."
-  end
-
-
+get '/signup' do     # if a user navigates to the path "/signup",
+  @user = User.new   # setup empty @user object
+  erb(:signup)       # render "app/views/signup.erb"
 end
 
 post '/signup' do
@@ -93,10 +71,40 @@ post '/finstagram_posts' do
     erb(:"finstagram_posts/new")
   end
 
-  get '/finstagram_posts/:id' do
-    @finstagram_post = FinstagramPost.find(params[:id])
-    erb(:"finstagram_posts/show")
-  end
 
 end
 
+get '/finstagram_posts/:id' do
+  @finstagram_post = FinstagramPost.find(params[:id])
+  erb(:"finstagram_posts/show")
+end
+
+post '/comments' do
+  # point values from params to variables
+  text = params[:text]
+  finstagram_post_id = params[:finstagram_post_id]
+
+  # instantiate a comment with those values & assign the comment to the `current_user`
+  comment = Comment.new({ text: text, finstagram_post_id: finstagram_post_id, user_id: current_user.id })
+
+  # save the comment
+  comment.save
+
+  # `redirect` back to wherever we came from
+  redirect(back)
+end
+
+post '/likes' do
+  finstagram_post_id = params[:finstagram_post_id]
+
+  like = Like.new({ finstagram_post_id: finstagram_post_id, user_id: current_user.id })
+  like.save
+
+  redirect(back)
+end
+
+delete '/likes/:id' do
+  like = Like.find(params[:id])
+  like.destroy
+  redirect(back)
+end
